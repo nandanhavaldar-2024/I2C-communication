@@ -1,0 +1,49 @@
+#include <WiFi.h>
+#include <WebServer.h>
+#include <Wire.h>
+
+const char* ssid = "YOUR_WIFI_NAME";
+const char* password = "YOUR_WIFI_PASSWORD";
+
+WebServer server(80);
+#define SLAVE_ADDR 8
+
+void handleRoot() {
+  String html = "<html><body>";
+  html += "<h2>ESP32 Message Sender</h2>";
+  html += "<form action='/send'>";
+  html += "Message: <input type='text' name='msg'>";
+  html += "<input type='submit' value='Send'>";
+  html += "</form></body></html>";
+  server.send(200, "text/html", html);
+}
+
+void handleSend() {
+  String message = server.arg("msg");
+
+  Wire.beginTransmission(SLAVE_ADDR);
+  Wire.write(message.c_str());
+  Wire.endTransmission();
+
+  server.send(200, "text/html", "Message Sent: " + message + "<br><a href='/'>Back</a>");
+}
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin();  
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
+
+  Serial.println(WiFi.localIP());
+
+  server.on("/", handleRoot);
+  server.on("/send", handleSend);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+}
