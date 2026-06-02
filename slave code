@@ -1,0 +1,37 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+#define SLAVE_ADDR 8
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+String receivedMessage = "";
+
+void receiveEvent(int howMany) {
+  receivedMessage = "";
+  while (Wire.available()) {
+    char c = Wire.read();
+    receivedMessage += c;
+  }
+
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(receivedMessage);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  Wire.begin(SLAVE_ADDR);
+  Wire.onReceive(receiveEvent);
+
+  lcd.init();
+  lcd.backlight();
+
+  lcd.print("Waiting...");
+}
+
+void loop() {
+}
